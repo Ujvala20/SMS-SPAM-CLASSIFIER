@@ -1,0 +1,77 @@
+{
+  "best_model": "Logistic Regression (TF-IDF + features)",
+  "results": {
+    "Naive Bayes (TF-IDF)": {
+      "accuracy": 0.9690522243713733,
+      "precision": 1.0,
+      "recall": 0.7557251908396947,
+      "f1": 0.8608695652173913,
+      "roc_auc": 0.9878310635456029,
+      "pr_auc": 0.9611706431692049,
+      "confusion_matrix": [
+        [
+          903,
+          0
+        ],
+        [
+          32,
+          99
+        ]
+      ]
+    },
+    "Logistic Regression (TF-IDF)": {
+      "accuracy": 0.97678916827853,
+      "precision": 0.928,
+      "recall": 0.8854961832061069,
+      "f1": 0.90625,
+      "roc_auc": 0.9923114639074163,
+      "pr_auc": 0.9674170358798768,
+      "confusion_matrix": [
+        [
+          894,
+          9
+        ],
+        [
+          15,
+          116
+        ]
+      ]
+    },
+    "Naive Bayes (TF-IDF + features)": {
+      "accuracy": 0.9777562862669246,
+      "precision": 0.9736842105263158,
+      "recall": 0.8473282442748091,
+      "f1": 0.9061224489795918,
+      "roc_auc": 0.9901600263751871,
+      "pr_auc": 0.9717667958305516,
+      "confusion_matrix": [
+        [
+          900,
+          3
+        ],
+        [
+          20,
+          111
+        ]
+      ]
+    },
+    "Logistic Regression (TF-IDF + features)": {
+      "accuracy": 0.9806576402321083,
+      "precision": 0.937007874015748,
+      "recall": 0.9083969465648855,
+      "f1": 0.9224806201550387,
+      "roc_auc": 0.9950123845028869,
+      "pr_auc": 0.9758412605375646,
+      "confusion_matrix": [
+        [
+          895,
+          8
+        ],
+        [
+          12,
+          119
+        ]
+      ]
+    }
+  }
+}

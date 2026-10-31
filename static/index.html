@@ -1,0 +1,220 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>SpamLens: check any text message for spam</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{--blue:#2B3BE8;--deep:#141B6D;--paper:#F7F7FC;--ink:#14163A;--mute:#666A8C;--line:#E3E4F2;--spam:#D93A40;--spam-bg:#FDECEC;--ham:#0B8F7F;--ham-bg:#E2F5F2}
+*{box-sizing:border-box;margin:0}
+body{font:16px/1.55 'DM Sans',sans-serif;color:var(--ink);background:var(--paper)}
+h1,h2,h3,.num,.logo{font-family:'Bricolage Grotesque',sans-serif;letter-spacing:-.02em}
+.wrap{max-width:1080px;margin:0 auto;padding:0 24px}
+.mute{color:var(--mute)}
+header{background:var(--blue);color:#fff;padding-bottom:130px}
+nav{display:flex;justify-content:space-between;align-items:center;padding:22px 0}
+.logo{font-weight:800;font-size:1.35rem;color:#fff;text-decoration:none}
+nav a:not(.logo){color:#D5D9FF;text-decoration:none;margin-left:26px;font-weight:500}
+nav a:hover{color:#fff}
+h1{font-size:clamp(2.5rem,6.5vw,4.4rem);line-height:1.02;font-weight:800;max-width:10em;margin:52px 0 18px}
+header p{font-size:1.15rem;color:#D5D9FF;max-width:34rem}
+.card{background:#fff;border:1px solid var(--line);border-radius:20px;padding:26px}
+#input{margin-top:-96px;box-shadow:0 24px 60px rgba(20,27,109,.18)}
+textarea{width:100%;min-height:130px;border:1.5px solid var(--line);border-radius:14px;padding:16px;font:inherit;font-size:1.05rem;color:var(--ink);resize:vertical}
+textarea:focus{outline:3px solid #C9CEFF;border-color:var(--blue)}
+.bar{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-top:14px}
+.bar .sp{flex:1}
+.chip{border:1px solid var(--line);background:#fff;border-radius:999px;padding:7px 14px;font:inherit;font-size:.9rem;cursor:pointer;color:var(--ink)}
+.chip:hover{border-color:var(--blue);color:var(--blue)}
+.primary{background:var(--blue);color:#fff;border:0;border-radius:12px;padding:14px 28px;font:600 1rem 'DM Sans',sans-serif;cursor:pointer}
+.primary:hover{background:var(--deep)}
+.primary:disabled{opacity:.6;cursor:wait}
+#err{color:var(--spam);margin-top:10px}
+#result{display:none;padding:44px 0 20px}
+#result.show{display:block}
+h2{font-size:1.7rem;font-weight:800;margin-bottom:6px}
+.verdict{display:grid;grid-template-columns:1.2fr 1fr;gap:32px;border-radius:20px;padding:30px;border-left:8px solid}
+.v-spam{background:var(--spam-bg);border-color:var(--spam)}
+.v-ham{background:var(--ham-bg);border-color:var(--ham)}
+.verdict h2{font-size:2.6rem;margin:0}
+.v-spam h2{color:#A5262C}.v-ham h2{color:#08695D}
+#vp{font-weight:600;margin:4px 0 10px}
+.track{position:relative;height:14px;background:#fff;border-radius:99px;margin:26px 0 10px;overflow:visible}
+#fill{height:100%;border-radius:99px}
+#mark{position:absolute;top:-6px;width:3px;height:26px;background:var(--ink);border-radius:2px}
+.ctl{display:flex;justify-content:space-between;font-size:.85rem;color:var(--mute)}
+input[type=range]{width:100%;accent-color:var(--blue);margin-top:8px}
+.cols{display:grid;grid-template-columns:1.3fr 1fr;gap:20px;margin-top:20px}
+.sms{font-size:1.08rem;line-height:2.1;margin-top:10px}
+mark{padding:2px 5px;border-radius:5px;color:var(--ink)}
+.legend{font-size:.85rem;color:var(--mute);margin-top:12px}
+.row{display:grid;grid-template-columns:90px 1fr 36px;gap:10px;align-items:center;margin-top:12px;font-size:.95rem}
+.row i{display:block;height:12px;border-radius:99px}
+.row em{font-style:normal;color:var(--mute);text-align:right}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px;margin-top:14px}
+.tile{border:1px solid var(--line);border-radius:14px;padding:14px 16px;background:#fff;border-top:4px solid var(--ham)}
+.tile.risk{border-top-color:var(--spam)}
+.tile b{display:block}
+.tile .st{font-size:.8rem;font-weight:600;color:var(--ham)}
+.tile.risk .st{color:#A5262C}
+.tile p{font-size:.9rem;color:var(--mute);margin-top:4px}
+.band{background:#fff;border-top:1px solid var(--line);margin-top:56px;padding:60px 0}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:20px;margin:28px 0}
+.num{font-size:2.6rem;font-weight:800;line-height:1.1}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:36px;align-items:start}
+.cm{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.cm div{border-radius:12px;padding:18px;font-size:.9rem}
+.cm b{display:block;font:800 1.9rem 'Bricolage Grotesque',sans-serif}
+.cm .g{background:var(--ham-bg);color:#08695D}.cm .r{background:var(--spam-bg);color:#A5262C}
+table{width:100%;border-collapse:collapse;font-size:.92rem}
+th,td{text-align:left;padding:10px 8px;border-bottom:1px solid var(--line)}
+tr.best td{font-weight:600;background:var(--ham-bg)}
+footer{padding:30px 0;color:var(--mute);font-size:.9rem}
+@media(max-width:760px){.verdict,.cols,.two{grid-template-columns:1fr}.stats{grid-template-columns:1fr 1fr}nav a:not(.logo){display:none}}
+</style>
+</head>
+<body>
+<header>
+  <div class="wrap">
+    <nav><a class="logo" href="/">SpamLens</a><div><a href="#input">Analyze</a><a href="#model">Model accuracy</a></div></nav>
+    <h1>Is that text message a scam?</h1>
+    <p>Paste any SMS. Get a verdict, the signals behind it, and the exact words that gave it away.</p>
+  </div>
+</header>
+
+<main class="wrap">
+  <section class="card" id="input">
+    <textarea id="msg" maxlength="1000" placeholder="Paste a text message here"></textarea>
+    <div class="bar">
+      <span class="mute">Try:</span>
+      <button class="chip" data-ex="scam">Prize scam</button>
+      <button class="chip" data-ex="parcel">Parcel link</button>
+      <button class="chip" data-ex="friend">Message from a friend</button>
+      <span class="sp"></span>
+      <span class="mute" id="cnt">0 / 1000</span>
+      <button class="primary" id="go">Analyze message</button>
+    </div>
+    <div id="err"></div>
+  </section>
+
+  <section id="result">
+    <div class="verdict" id="verdict">
+      <div><h2 id="vt"></h2><div id="vp"></div><p id="vs"></p></div>
+      <div>
+        <div class="track"><div id="fill"></div><div id="mark"></div></div>
+        <div class="ctl"><span>0%</span><span>Spam probability</span><span>100%</span></div>
+        <input type="range" id="thr" min="5" max="95" value="50" aria-label="Sensitivity">
+        <div class="ctl"><span>Sensitivity: flag as spam above <b id="thrv">50%</b></span></div>
+      </div>
+    </div>
+
+    <div class="cols">
+      <div class="card">
+        <h3>Message breakdown</h3>
+        <div class="sms" id="hl"></div>
+        <div class="legend">Red words pushed the verdict towards spam, green words towards ham. <span id="facts"></span></div>
+      </div>
+      <div class="card">
+        <h3>What decided it</h3>
+        <p class="mute">Change in spam probability, in points, when the word is removed.</p>
+        <div id="why"></div>
+      </div>
+    </div>
+
+    <h3 style="margin-top:28px">Signals checked</h3>
+    <div class="grid" id="sig"></div>
+  </section>
+</main>
+
+<section class="band" id="model">
+  <div class="wrap">
+    <h2>How accurate is it?</h2>
+    <p class="mute">Scores of <b id="bestname"></b> on messages it never saw during training.</p>
+    <div class="stats" id="stats"></div>
+    <div class="two">
+      <div><h3 style="margin-bottom:10px">Every model compared</h3><table id="tbl"></table></div>
+      <div><h3 style="margin-bottom:10px">What it got right and wrong</h3><div class="cm" id="cm"></div></div>
+    </div>
+  </div>
+</section>
+<footer class="wrap">SpamLens is a machine learning project. TF-IDF text features with Naive Bayes and Logistic Regression, trained on the SMS Spam Collection.</footer>
+
+<script>
+const $=s=>document.querySelector(s),esc=s=>s.replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const EX={scam:'WINNER! You have won a £900 prize. Call 09061701461 now or visit www.claim-prize.com to claim your reward.',parcel:'Your parcel is on hold. Confirm your address within 24 hours at www.track-parcel.com or it will be returned.',friend:'Hey, are we still meeting at the library at 5? I will bring the notes.'};
+let D=null;
+const count=()=>$('#cnt').textContent=$('#msg').value.length+' / 1000';
+$('#msg').oninput=count;
+document.querySelectorAll('[data-ex]').forEach(b=>b.onclick=()=>{$('#msg').value=EX[b.dataset.ex];count()});
+
+$('#go').onclick=async()=>{
+  const text=$('#msg').value.trim();$('#err').textContent='';
+  if(!text){$('#msg').focus();return}
+  const b=$('#go');b.disabled=true;b.textContent='Analyzing…';
+  try{
+    const r=await fetch('/api/analyze',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({text})});
+    if(!r.ok)throw 0;
+    D=await r.json();draw();$('#result').classList.add('show');$('#result').scrollIntoView({behavior:'smooth'});
+  }catch(e){$('#err').textContent='Could not analyze the message. Check that the server is running and try again.'}
+  b.disabled=false;b.textContent='Analyze message';
+};
+
+function summary(s,spam){
+  const r=[];
+  if(s.url)r.push('a link');if(s.phone)r.push('a phone number');if(s.money)r.push('a money amount');
+  if(s.urgency.length)r.push('pressure words such as “'+s.urgency.slice(0,3).join('”, “')+'”');
+  if(s.caps>.3)r.push('heavy use of capitals');
+  const l=r.join(', ').replace(/, ([^,]*)$/,' and $1');
+  if(spam)return l?'It contains '+l+', which is typical of spam.':'Its wording closely matches messages the model learned to be spam.';
+  return l?'It has '+l+', but the overall wording looks like a normal message.':'Nothing in it matches common spam patterns.';
+}
+
+function verdict(){
+  if(!D)return;
+  const t=$('#thr').value/100,p=D.probability,spam=p>=t;
+  $('#thrv').textContent=Math.round(t*100)+'%';
+  $('#verdict').className='verdict '+(spam?'v-spam':'v-ham');
+  $('#vt').textContent=spam?'Likely spam':'Looks safe';
+  $('#vp').textContent=Math.round(p*100)+'% spam probability';
+  $('#vs').textContent=summary(D.signals,spam);
+  $('#fill').style.width=p*100+'%';$('#fill').style.background=spam?'var(--spam)':'var(--ham)';
+  $('#mark').style.left=t*100+'%';
+}
+$('#thr').oninput=verdict;
+
+function draw(){
+  const w=D.words,m=Math.max(...w.map(x=>Math.abs(x.impact)),1e-9);
+  $('#hl').innerHTML=w.map(x=>{
+    if(Math.abs(x.impact)<.005)return esc(x.w);
+    const a=(Math.abs(x.impact)/m*.6).toFixed(2),c=x.impact>0?'217,58,64':'11,143,127';
+    return `<mark style="background:rgba(${c},${a})" title="${(x.impact*100).toFixed(1)} points">${esc(x.w)}</mark>`}).join(' ');
+  const s=D.signals,cp=s.caps>.3;
+  const T=[['Link',s.url,s.url?'Contains a web link':'No link found'],
+    ['Phone number',s.phone,s.phone?'Contains a long number':'No phone number'],
+    ['Money',s.money,s.money?'Mentions a currency amount':'No money mentioned'],
+    ['Pressure words',s.urgency.length>0,s.urgency.length?'Found: '+s.urgency.join(', '):'No urgency or prize wording'],
+    ['Capitals',cp,cp?'Heavy use of capitals ('+Math.round(s.caps*100)+'%)':'Normal capitalisation']];
+  $('#sig').innerHTML=T.map(([t,f,d])=>`<div class="tile ${f?'risk':''}"><b>${t}</b><span class="st">${f?'Found':'Clear'}</span><p>${d}</p></div>`).join('');
+  const top=[...w].filter(x=>Math.abs(x.impact)>=.005).sort((a,b)=>Math.abs(b.impact)-Math.abs(a.impact)).slice(0,6);
+  const mx=Math.max(...top.map(x=>Math.abs(x.impact)),1e-9);
+  $('#why').innerHTML=top.length?top.map(x=>`<div class="row"><span>${esc(x.w.replace(/^\W+|\W+$/g,'')||x.w)}</span><i style="width:${Math.abs(x.impact)/mx*100}%;background:${x.impact>0?'var(--spam)':'var(--ham)'}"></i><em>${x.impact>0?'+':''}${(x.impact*100).toFixed(0)}</em></div>`).join(''):'<p class="mute" style="margin-top:12px">No single word had a strong effect.</p>';
+  $('#facts').textContent=D.stats.words+' words, '+D.stats.chars+' characters.';
+  verdict();
+}
+
+(async()=>{
+  try{
+    const m=await(await fetch('/api/metrics')).json(),b=m.results[m.best];
+    $('#bestname').textContent=m.best;
+    $('#stats').innerHTML=[['F1 score',b.f1],['Precision',b.precision],['Recall',b.recall],['Accuracy',b.accuracy]].map(([k,v])=>`<div><div class="num">${(v*100).toFixed(1)}%</div><div class="mute">${k}</div></div>`).join('');
+    const [[tn,fp],[fn,tp]]=b.confusion_matrix;
+    $('#cm').innerHTML=`<div class="g"><b>${tn}</b>real messages passed</div><div class="r"><b>${fp}</b>false alarms</div><div class="r"><b>${fn}</b>spam missed</div><div class="g"><b>${tp}</b>spam caught</div>`;
+    $('#tbl').innerHTML='<tr><th>Model</th><th>F1</th><th>Precision</th><th>Recall</th></tr>'+Object.entries(m.results).map(([n,r])=>`<tr class="${n===m.best?'best':''}"><td>${n}</td><td>${r.f1.toFixed(3)}</td><td>${r.precision.toFixed(3)}</td><td>${r.recall.toFixed(3)}</td></tr>`).join('');
+  }catch(e){}
+})();
+</script>
+</body>
+</html>
