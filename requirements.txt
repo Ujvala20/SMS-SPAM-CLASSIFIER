@@ -1,0 +1,12 @@
+dir README.md
+dir requirements.txt
+pandas
+numpy
+scikit-learn
+plotly
+streamlit
+joblib
+wordcloud
+matplotlib
+fastapi
+uvicorn
